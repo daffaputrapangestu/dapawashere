@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daffa — Personal Space</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#020203}
+body{font-family:monospace}
+.space{position:fixed;inset:0;background:radial-gradient(ellipse at center,rgba(35,10,45,.10),transparent 65%),#020203;overflow:hidden}
+.star{position:absolute;width:2px;height:2px;background:#fff;opacity:0;animation:twinkle 5s ease-in-out infinite}
+.star:nth-child(1){left:14%;top:24%;animation-delay:1s}.star:nth-child(2){left:82%;top:18%;animation-delay:3s}
+.star:nth-child(3){left:73%;top:72%;animation-delay:.5s}.star:nth-child(4){left:22%;top:78%;animation-delay:2.5s}
+.star:nth-child(5){left:91%;top:52%;animation-delay:4s}
+@keyframes twinkle{0%,100%{opacity:.05;transform:scale(.7)}50%{opacity:.55;transform:scale(1.2)}}
+.shooting-star{position:absolute;width:45px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);opacity:0;transform:rotate(-35deg);animation:shootingStar 11s linear infinite}
+.shooting-star.one{left:12%;top:30%;animation-delay:4s}.shooting-star.two{left:76%;top:65%;width:35px;animation-delay:9s}
+@keyframes shootingStar{0%{opacity:0;transform:translate(0,0) rotate(-35deg)}2%{opacity:.5}8%{opacity:0;transform:translate(180px,120px) rotate(-35deg)}100%{opacity:0}}
+.intro{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:10;transition:opacity .8s ease}
+.planet-button{border:0;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;outline:none}
+.planet{width:115px;height:auto;image-rendering:pixelated;user-select:none;animation:floating 4s ease-in-out infinite;transition:transform .4s ease,filter .4s ease}
+@keyframes floating{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.planet-button:hover .planet{transform:scale(1.06) translateY(-3px);filter:drop-shadow(0 0 10px rgba(210,120,255,.25))}
+.click-text{margin-top:14px;color:rgba(255,255,255,.72);font-size:11px;letter-spacing:2px;animation:textPulse 2.5s ease-in-out infinite}
+@keyframes textPulse{0%,100%{opacity:.45}50%{opacity:.9}}
+.loading{position:fixed;inset:0;z-index:20;background:#020203;display:flex;justify-content:center;align-items:center;opacity:0;visibility:hidden;transition:opacity .7s ease}
+.loading.active{opacity:1;visibility:visible}
+.loading-content{width:220px;display:flex;flex-direction:column;align-items:center}
+.loading-text{color:#fff;font-size:10px;letter-spacing:3px;margin-bottom:12px;text-align:center}
+.bar-container{width:210px;height:7px;border:1px solid rgba(255,255,255,.8);padding:1px}
+.bar{width:0;height:100%;background:#fff}
+.here-we-go{position:fixed;inset:0;z-index:30;display:flex;justify-content:center;align-items:center;background:#020203;opacity:0;visibility:hidden}
+.here-we-go.active{opacity:1;visibility:visible}
+.here-text{color:#fff;font-size:13px;letter-spacing:4px;animation:appear 1.2s ease forwards}
+@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.profile{position:fixed;inset:0;z-index:40;background:#020203;display:flex;justify-content:center;align-items:center;opacity:0;visibility:hidden;transition:opacity 1s ease}
+.profile.active{opacity:1;visibility:visible}
+.profile h1{color:#fff;font-size:20px;letter-spacing:5px}
+@media(max-width:600px){.planet{width:95px}.click-text{font-size:10px}.loading-content{width:190px}.bar-container{width:180px}}
+</style>
+</head>
+<body>
+<div class="space">
+  <div class="star"></div><div class="star"></div><div class="star"></div>
+  <div class="star"></div><div class="star"></div>
+  <div class="shooting-star one"></div><div class="shooting-star two"></div>
+</div>
+
+<section class="intro" id="intro">
+  <button class="planet-button" id="planetButton" aria-label="Start">
+    <img src="./assets/planet.png" class="planet" alt="pixel planet">
+    <span class="click-text">click me pls</span>
+  </button>
+</section>
+
+<section class="loading" id="loading">
+  <div class="loading-content">
+    <div class="loading-text">LOADING</div>
+    <div class="bar-container"><div class="bar" id="bar"></div></div>
+  </div>
+</section>
+
+<section class="here-we-go" id="hereWeGo">
+  <div class="here-text">HERE WE GO</div>
+</section>
+
+<section class="profile" id="profile">
+  <h1>DAFFA PUTRA PANGESTU</h1>
+</section>
+
+<script>
+const intro=document.getElementById("intro");
+const loading=document.getElementById("loading");
+const bar=document.getElementById("bar");
+const hereWeGo=document.getElementById("hereWeGo");
+const profile=document.getElementById("profile");
+const planetButton=document.getElementById("planetButton");
+
+let audioContext=null;
+
+function createSpaceSound(){
+  if(audioContext)return;
+  audioContext=new (window.AudioContext||window.webkitAudioContext)();
+  const duration=2;
+  const buffer=audioContext.createBuffer(1,audioContext.sampleRate*duration,audioContext.sampleRate);
+  const data=buffer.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*.18;
+  const source=audioContext.createBufferSource();
+  source.buffer=buffer; source.loop=true;
+  const filter=audioContext.createBiquadFilter();
+  filter.type="lowpass"; filter.frequency.value=700;
+  const gain=audioContext.createGain();
+  gain.gain.value=.035;
+  source.connect(filter).connect(gain).connect(audioContext.destination);
+  source.start();
+}
+
+planetButton.addEventListener("click",()=>{
+  createSpaceSound();
+  intro.style.opacity="0";
+  setTimeout(()=>intro.style.visibility="hidden",800);
+  setTimeout(()=>{loading.classList.add("active");startLoading()},500);
+});
+
+function startLoading(){
+  const duration=5000,start=performance.now();
+  function animate(now){
+    const progress=Math.min((now-start)/duration,1);
+    bar.style.width=(progress*100)+"%";
+    if(progress<1) requestAnimationFrame(animate);
+    else finishLoading();
+  }
+  requestAnimationFrame(animate);
+}
+
+function finishLoading(){
+  setTimeout(()=>{
+    loading.style.opacity="0";
+    setTimeout(()=>{
+      loading.style.visibility="hidden";
+      hereWeGo.classList.add("active");
+      setTimeout(()=>{
+        hereWeGo.classList.remove("active");
+        profile.classList.add("active");
+      },1500);
+    },700);
+  },300);
+}
+</script>
+</body>
+</html>
